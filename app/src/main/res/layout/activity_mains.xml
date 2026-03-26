@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#f5f5f5">
+    <include
+        android:id="@+id/titleBar"
+        layout="@layout/activity_title"/>
+   <LinearLayout
+       android:layout_width="match_parent"
+       android:layout_height="match_parent"
+       android:orientation="vertical"
+       android:padding="16dp">
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="USSD命令执行器"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:textColor="#333333"
+        android:gravity="center"
+        android:visibility="gone"
+        android:layout_marginBottom="20dp" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="输入USSD命令（例如：*#06#）"
+        android:textSize="16sp"
+        android:textColor="#666666"
+        android:layout_marginBottom="8dp" />
+
+    <EditText
+        android:id="@+id/ussdEditText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="输入USSD命令，如 *#06#"
+        android:textSize="16sp"
+        android:padding="12dp"
+        android:textColor="#000"
+        android:background="@drawable/edittext_background"
+        android:layout_marginBottom="16dp"
+        android:inputType="text"
+        android:text="*#06#" />
+
+    <Button
+        android:id="@+id/executeButton"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:text="执行USSD命令"
+        android:textSize="18sp"
+        android:textColor="#ffffff"
+        android:background="@drawable/button_background"
+        android:layout_marginBottom="20dp" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="截图预览："
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:textColor="#333333"
+        android:layout_marginBottom="8dp" />
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:background="@drawable/screenshot_background">
+
+        <ImageView
+            android:id="@+id/screenshotImageView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:scaleType="fitCenter"
+            android:adjustViewBounds="true"
+            android:visibility="gone"
+            android:layout_margin="8dp" />
+
+    </ScrollView>
+
+    <TextView
+        android:id="@+id/tv_code"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="使用说明：\n1. 输入USSD命令点击执行\n2. 系统会自动弹出结果对话框\n3. 自动输入密码\n4. 自动截图并显示"
+        android:textSize="12sp"
+        android:textColor="#999999"
+        android:layout_marginTop="8dp"
+        android:background="@drawable/info_background"
+        android:padding="8dp" />
+   </LinearLayout>
+</LinearLayout>

@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+    <include
+        android:id="@+id/titleBar"
+        layout="@layout/activity_title"/>
+    <LinearLayout
+        android:padding="20dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+        <EditText
+            android:id="@+id/et_ussd_cmd"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="输入埃及运营商USSD命令（如*101#）"
+            android:text="*9*7*01080975195*100#"/>
+
+        <Button
+            android:id="@+id/btn_run_ussd"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="执行USSD命令"
+            android:layout_marginTop="10dp"/>
+
+        <TextView
+            android:id="@+id/tv_ussd_result"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:text="USSD执行结果"
+            android:textSize="16sp"/>
+        <TextView
+            android:id="@+id/tv_ussd_results"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:text="USSD结果解析"
+            android:textSize="16sp"/>
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="截图预览："
+            android:textSize="16sp"
+            android:visibility="visible"
+            android:textStyle="bold"
+            android:textColor="#333333"
+            android:layout_marginBottom="8dp" />
+
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:background="@drawable/screenshot_background">
+
+            <ImageView
+                android:id="@+id/screenshotImageView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:scaleType="fitCenter"
+                android:adjustViewBounds="true"
+                android:visibility="gone"
+                android:layout_margin="8dp" />
+
+        </ScrollView>
+    </LinearLayout>
+
+</LinearLayout>
