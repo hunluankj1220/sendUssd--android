@@ -1,0 +1,11 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/action_setPwd"
+        android:title="密码设置"/>
+
+    <item
+        android:id="@+id/action_setId"
+        android:title="设备ID设置"/>
+
+</menu>

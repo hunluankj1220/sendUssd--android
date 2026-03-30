@@ -11,8 +11,10 @@ import com.afollestad.materialdialogs.MaterialDialog;
  */
 public class openAccessibilityUtils {
 
+    private static MaterialDialog materialDialog;
+
     public static void openAccessibility(Context context) {
-        MaterialDialog materialDialog = new MaterialDialog(context, MaterialDialog.getDEFAULT_BEHAVIOR());
+        materialDialog = new MaterialDialog(context, MaterialDialog.getDEFAULT_BEHAVIOR());
         materialDialog.title(null, "info");
         materialDialog.message(null, "plese open accessibility switch", null);
         materialDialog.positiveButton(null, "openSetting", dialog -> {
@@ -26,7 +28,13 @@ public class openAccessibilityUtils {
 
     private static void openAccessibilitySettings(Context context) {
         Intent intent = new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS);
-        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+//        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         context.startActivity(intent);
+    }
+    public static void dismiss(){
+        if (materialDialog !=null && materialDialog.isShowing()){
+            materialDialog.dismiss();
+            materialDialog = null;
+        }
     }
 }

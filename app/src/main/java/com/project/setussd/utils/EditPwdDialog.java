@@ -17,7 +17,7 @@ public class EditPwdDialog {
      * @param defaultPwd 默认密码
      * @param confirmListener 确认按钮回调
      */
-    public static void showInputPwdDialog(Context context, String defaultPwd, OnPwdConfirmListener confirmListener) {
+    public static void showInputPwdDialog(Context context,int type,String title, String defaultPwd, OnPwdConfirmListener confirmListener) {
         // 创建Dialog构建器
         AlertDialog.Builder builder = new AlertDialog.Builder(context);
         LayoutInflater inflater = LayoutInflater.from(context);
@@ -30,7 +30,7 @@ public class EditPwdDialog {
 
         // 设置布局和标题
         builder.setView(dialogView);
-        builder.setTitle("密码设置");
+        builder.setTitle(title);
         builder.setCancelable(false); // 禁止点击外部关闭
 
         // 创建并显示弹窗
@@ -38,11 +38,7 @@ public class EditPwdDialog {
         ussdDialog.show();
 
         // 设置默认密码
-        if (defaultPwd != null && !defaultPwd.isEmpty()) {
-            inputField.setText(defaultPwd);
-        } else {
-            inputField.setText("333777");
-        }
+        inputField.setText(defaultPwd);
 
         // 取消按钮
         btnCancel.setOnClickListener(v -> ussdDialog.dismiss());
@@ -51,7 +47,14 @@ public class EditPwdDialog {
         btnConfirm.setOnClickListener(v -> {
             String inputPwd = inputField.getText().toString().trim();
             // 保存到缓存
-            CacheUtils.put(context, "PWD", inputPwd);
+            if (type == 1){
+                //密码
+                CacheUtils.put(context, "PWD", inputPwd);
+            }else if(type == 2){
+                //id
+                CacheUtils.put(context, "PHONEID", inputPwd);
+            }
+
             // 回调通知外部
             if (confirmListener != null) {
                 confirmListener.onConfirm(inputPwd);

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- 开关开启时的轨道颜色（浅色调，搭配滑块主色） -->
+    <item android:color="@color/colorPrimary" android:state_checked="true"/>
+    <!-- 开关关闭时的轨道颜色（灰色） -->
+    <item android:color="@color/gray_light" android:state_checked="false"/>
+    <!-- 开关禁用时的轨道颜色（浅灰） -->
+    <item android:color="@color/gray_100"/>
+</selector>

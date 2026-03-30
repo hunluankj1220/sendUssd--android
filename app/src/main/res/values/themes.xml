@@ -14,8 +14,11 @@
         <!-- Customize your theme here. -->
     </style>
     <style name="AppTheme" parent="Theme.MaterialComponents.Light.NoActionBar">
-        <item name="windowNoTitle">true</item>
-        <item name="windowActionBar">false</item>
-        <item name="android:windowFullscreen">true</item>
+        <!-- 使状态栏透明 -->
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <!-- 指定状态栏图标模式（true=浅色背景下黑色图标） -->
+        <item name="android:windowLightStatusBar">true</item>
+        <!-- 支持刘海全屏，shortEdges表示纵向横向均可延伸 -->
+        <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
     </style>
 </resources>

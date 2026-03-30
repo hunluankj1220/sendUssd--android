@@ -5,7 +5,7 @@ plugins {
 android {
     signingConfigs {
         debug {
-            storeFile file('E:\\code\\Android\\setussd\\sendUssd.jks')
+            storeFile file('D:\\polysoftproject\\pmh\\git\\sendUssd--android\\sendUssd.jks')
             storePassword 'hunluankj0'
             keyAlias 'key0'
             keyPassword 'hunluankj0'
