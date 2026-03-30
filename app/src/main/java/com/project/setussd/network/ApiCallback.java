@@ -1,4 +1,4 @@
-package com.project.setussd.bean;
+package com.project.setussd.network;
 
 /**
  * 请求回调接口

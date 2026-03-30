@@ -4,8 +4,6 @@ import android.os.Handler;
 import android.os.Looper;
 
 import com.google.gson.Gson;
-import com.project.setussd.bean.ApiCallback;
-import com.project.setussd.bean.ApiResponse;
 import com.project.setussd.bean.ErrorCode;
 import com.project.setussd.log.LogInterceptor;
 

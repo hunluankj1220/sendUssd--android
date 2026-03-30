@@ -322,6 +322,7 @@ public class ChatOneActivity extends AppCompatActivity {
                     dm.densityDpi
             );
             ussdCode = binding.etUssdCmd.getText().toString();
+            CacheUtils.put(ChatOneActivity.this,"USSDCODE",ussdCode);
             // ⭐ 执行USSD
             UssdState.reset();
             if (ActivityCompat.checkSelfPermission(this, Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED) {

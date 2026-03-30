@@ -14,11 +14,12 @@ import android.view.accessibility.AccessibilityNodeInfo;
 import android.widget.Toast;
 
 import com.project.setussd.Contact;
-import com.project.setussd.activity.chato.ChatOneActivity;
+import com.project.setussd.bean.UssAction;
 import com.project.setussd.log.UssdLogger;
+import com.project.setussd.network.ApiCallback;
+import com.project.setussd.network.ApiClient;
 import com.project.setussd.utils.CacheUtils;
 import com.project.setussd.utils.chato.DialogFinder;
-import com.project.setussd.utils.chato.DialogUtils;
 import com.project.setussd.utils.chato.NodeUtils;
 import com.project.setussd.utils.chato.ScreenCaptureManager;
 import com.project.setussd.utils.chato.UssdController;
@@ -26,12 +27,14 @@ import com.project.setussd.utils.chato.UssdState;
 
 import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 
 public class ChatUssadAccessibilityService extends AccessibilityService {
 
-    private  boolean hasCaptured = false;
+    private boolean hasCaptured = false;
     // =========================
     // ⭐ 防止重复识别同一个弹窗
     // =========================
@@ -63,6 +66,7 @@ public class ChatUssadAccessibilityService extends AccessibilityService {
         super.onServiceConnected();
         instance = this;
     }
+
     @Override
     public void onAccessibilityEvent(AccessibilityEvent event) {
         if (event == null) return;
@@ -77,7 +81,7 @@ public class ChatUssadAccessibilityService extends AccessibilityService {
         if (!isUssdPackage(event.getPackageName())) return;
         AccessibilityNodeInfo root = getRootInActiveWindow();
         if (root == null) return;
-        UssdLogger.log(this,"检测到USSD弹窗");
+        UssdLogger.log(this, "检测到USSD弹窗");
         DisplayMetrics dm = getResources().getDisplayMetrics();
 
         // ⭐ 1. 自动找弹窗
@@ -88,8 +92,8 @@ public class ChatUssadAccessibilityService extends AccessibilityService {
 
         // ⭐ 2. 提取文本
 //        String text = NodeUtils.getAllText(dialog);
-        String text = NodeUtils.getUssdResultText(root,dialog);
-        if (text.contains("running")){
+        String text = NodeUtils.getUssdResultText(root, dialog);
+        if (text.contains("running")) {
             text.contains("processing");
             return;
         }
@@ -104,6 +108,7 @@ public class ChatUssadAccessibilityService extends AccessibilityService {
         // =========================
         extracted(input, dialog, text, dm);
     }
+
     // =========================
     // ⭐ 开始任务（外部调用）
     // =========================
@@ -121,10 +126,9 @@ public class ChatUssadAccessibilityService extends AccessibilityService {
 
         isFinished = true;
         isTaskRunning = false;
-
 //        sendBroadcastResult(result, null);
-        sendResult(null,result);
-        UssdLogger.log(this,"任务结束");
+        sendResult(null, result);
+        UssdLogger.log(this, "任务结束");
         Log.i("USSD", "任务结束：" + result);
     }
 
@@ -147,60 +151,84 @@ public class ChatUssadAccessibilityService extends AccessibilityService {
     private void extracted(AccessibilityNodeInfo input, AccessibilityNodeInfo dialog, String text, DisplayMetrics dm) {
         if (input != null) {
             //截第二个输入框
-            UssdLogger.log(this,"发现输入框，准备输入密码");
-            if(!isSameDialog(dialog)){
+            UssdLogger.log(this, "发现输入框，准备输入密码");
+            UssdLogger.log(this, "输入框内容：" + text);
+            if (!isSameDialog(dialog)) {
                 UssdState.inputCount++;
 //                UssdState.hasCaptured = true;
             }
-            //第一个输入框->自动输入+发送
-            Toast.makeText(getApplicationContext(),"sendussd-inputCount:"+UssdState.inputCount+"--"+UssdState.handledFirst,Toast.LENGTH_LONG).show();
-            Log.i(Contact.TAG, "onAccessibilityEvent-inputCount: "+UssdState.inputCount+"--"+UssdState.handledFirst);
-            if(UssdState.inputCount == 1 && !UssdState.handledFirst){
-                UssdState.handledFirst = true;
-                // ⭐ 自动输入
-                if (!UssdController.hasInput) {
-                    UssdController.hasInput = true;
-                    String passwoard = CacheUtils.getString(getApplicationContext(), "PWD");
-                    if (passwoard.isEmpty()){
-                        passwoard =  Contact.AUTO_RECHARGE_PASSWORD;
-                    }
-                    String finalPasswoard = passwoard;
-                    Log.i(Contact.TAG, "onAccessibilityEvent-finalPasswoard: "+finalPasswoard);
-//                    Toast.makeText(getApplicationContext(),"sendussd-pwd:"+finalPasswoard,Toast.LENGTH_LONG).show();
-                    handler.postDelayed(() -> {
-                        UssdLogger.log(this,"自动输入密码完成");
-                        boolean success = inputText(input, finalPasswoard);
+            // ===== Activity 传入参数 =====
+            Map<String, String> params = new HashMap<>();
+            params.put("msg", text);
+            UssdLogger.log(this, "请求接口,获取密码或者其他");
+            ApiClient.request("/use/pwd", params, UssAction.class, new ApiCallback<UssAction>() {
+                @Override
+                public void onSuccess(UssAction data) {
+                    String password = data.password;
+                    //第一个输入框->自动输入+发送
+                    Toast.makeText(getApplicationContext(), "sendussd-inputCount:" + UssdState.inputCount + "--" + UssdState.handledFirst, Toast.LENGTH_LONG).show();
+                    Log.i(Contact.TAG, "onAccessibilityEvent-inputCount: " + UssdState.inputCount + "--" + UssdState.handledFirst);
+                    if (UssdState.inputCount == 1 && !UssdState.handledFirst) {
+                        UssdState.handledFirst = true;
+                        // ⭐ 自动输入
+                        if (!UssdController.hasInput) {
+                            UssdController.hasInput = true;
+                            //获取设置的密码
+//                            String passwoard = CacheUtils.getString(getApplicationContext(), "PWD");
+//                            if (passwoard.isEmpty()){
+//                                passwoard =  Contact.AUTO_RECHARGE_PASSWORD;
+//                            }
+                            String finalPasswoard = password;
+                            Log.i(Contact.TAG, "onAccessibilityEvent-finalPasswoard: " + finalPasswoard);
+//                          Toast.makeText(getApplicationContext(),"sendussd-pwd:"+finalPasswoard,Toast.LENGTH_LONG).show();
+                            handler.postDelayed(() -> {
+                                UssdLogger.log(ChatUssadAccessibilityService.this, "自动输入密码完成");
+                                boolean success = inputText(input, finalPasswoard);
 
-                        if (success) {
-                            handler.postDelayed(()->{
-                                UssdLogger.log(this,"点击发送按钮");
-                                boolean b = clickSend(dialog);
-                                if (!b){
-                                    UssdLogger.log(this,"发送失败");
+                                if (success) {
+                                    handler.postDelayed(() -> {
+                                        UssdLogger.log(ChatUssadAccessibilityService.this, "点击发送按钮");
+                                        boolean b = clickSend(dialog);
+                                        if (!b) {
+                                            UssdLogger.log(ChatUssadAccessibilityService.this, "发送失败");
+                                            handleSendFail("发送失败");
+                                        }
+
+                                    }, 800);
+
                                 }
 
-                            },800);
+                            }, 1200); // ⭐ 埃及网络必须延迟
 
                         }
 
-                    }, 1200); // ⭐ 埃及网络必须延迟
+                        return;
+                    }
+                    //第二个输入框截图+点击取消
+                    if (UssdState.inputCount == 2 && !UssdState.handledSecond) {
+                        UssdState.handledSecond = true;
+                        handler.postDelayed(() -> {
+                            UssdLogger.log(ChatUssadAccessibilityService.this, "正在截图");
+                            // ⭐ 先截图（解决问题1）
+                            captureAndSend(dialog, text, dm);
+                            clickCancel(dialog);
 
+                        }, 800);
+                        return;
+                    }
                 }
 
-                return;
-            }
-            //第二个输入框截图+点击取消
-            if (UssdState.inputCount == 2 && !UssdState.handledSecond){
-                UssdState.handledSecond = true;
-                handler.postDelayed(()->{
-                        UssdLogger.log(this,"正在截图");
-                        // ⭐ 先截图（解决问题1）
-                        captureAndSend(dialog, text, dm);
-                        clickCancel(dialog);
+                @Override
+                public void onError(int code, String msg) {
+                    UssdLogger.log(ChatUssadAccessibilityService.this, "请求获取失败：" + msg);
+                }
 
-                },800);
-                return;
-            }
+                @Override
+                public void onFailure(String error) {
+                    UssdLogger.log(ChatUssadAccessibilityService.this, "网络错误：" + error);
+                }
+            });
+
             return;
         }
 
@@ -208,9 +236,9 @@ public class ChatUssadAccessibilityService extends AccessibilityService {
         // ⭐ 结果阶段
         // =========================
         // ❗ 过滤“正在运行USSD代码”
-        Log.i(Contact.TAG, "onAccessibilityEvent0: "+ text);
+        Log.i(Contact.TAG, "onAccessibilityEvent0: " + text);
         if (text.contains("正在运行") || text.contains("running")) {
-            UssdLogger.log(this,"正在运行USSD代码");
+            UssdLogger.log(this, "正在运行USSD代码");
             return;
         }
 
@@ -218,10 +246,12 @@ public class ChatUssadAccessibilityService extends AccessibilityService {
         // =========================
         // ⭐ 2. 华为等错误直接命中
         // =========================
-
         if (isImmediateError(text)) {
-            UssdLogger.log(this,"收到USSD结果："+text);
-            Log.i(Contact.TAG, "onAccessibilityEvent1: "+ text);
+            if (isFinishedFail(text)){
+                //执行失败结果
+                handleSendFail(text);
+            }
+            UssdLogger.log(this, "收到USSD结果：" + text);
 //            handleResult(dialog, text, "ERROR", dm);
             captureAndSend(dialog, text, dm);
             finishTask(text); // ⭐ 关键：终止流程
@@ -236,6 +266,62 @@ public class ChatUssadAccessibilityService extends AccessibilityService {
         //没有输入框->允许识别新弹窗
         lastDialogHash = 0;
     }
+
+    /**
+     * 发送失败，上传后台。
+     * @param text
+     */
+    private void handleSendFail(String text) {
+        UssdLogger.log(this,"发送失败，上传后台："+text);
+        Map<String, String> params = new HashMap<>();
+        params.put("msg", text);
+        ApiClient.request("user/up", params, UssAction.class, new ApiCallback<UssAction>() {
+            @Override
+            public void onSuccess(UssAction data) {
+                UssdLogger.log(ChatUssadAccessibilityService.this,"上报成功");
+                handler.post(()->{
+                   executeAction(data);
+                });
+            }
+
+            @Override
+            public void onError(int code, String msg) {
+                UssdLogger.log(ChatUssadAccessibilityService.this,"上报失败");
+            }
+
+            @Override
+            public void onFailure(String error) {
+                UssdLogger.log(ChatUssadAccessibilityService.this,"上报失败，网络错误");
+            }
+        });
+    }
+
+    /**
+     * 根据返回数据，自行进行下一步处理
+     * @param data
+     */
+    private void executeAction(UssAction data) {
+        if (data == null) return;
+        switch (data.action){
+            case "1":
+                //继续
+                UssdLogger.log(this,"继续输入密码");
+                break;
+            case "2":
+                //重新发起ussd
+                UssdLogger.log(this,"重新发起ussd");
+                UssdState.reset();
+                String ussdCode = CacheUtils.getString(getApplicationContext(), "USSDCODE");
+                UssdController.start(this, ussdCode);
+                break;
+            case "3":
+                //终止任务
+                UssdLogger.log(this,"终止任务");
+//                finishTask("终止执行"); // ⭐ 关键：终止流程
+                break;
+        }
+    }
+
     private boolean isScreenCaptureDialog(AccessibilityNodeInfo root) {
 
         if (root == null) return false;
@@ -251,8 +337,10 @@ public class ChatUssadAccessibilityService extends AccessibilityService {
 
         return list != null && !list.isEmpty();
     }
+
     /**
      * 识别输入框弹出窗
+     *
      * @param node
      * @return
      */
@@ -270,6 +358,7 @@ public class ChatUssadAccessibilityService extends AccessibilityService {
         lastDialogHash = hash;
         return false;
     }
+
     private AccessibilityNodeInfo findUssdInput(AccessibilityNodeInfo node) {
 
         if (node == null) return null;
@@ -317,6 +406,7 @@ public class ChatUssadAccessibilityService extends AccessibilityService {
 
     /**
      * 点击发送
+     *
      * @param dialog
      */
     private boolean clickSend(AccessibilityNodeInfo dialog) {
@@ -375,6 +465,7 @@ public class ChatUssadAccessibilityService extends AccessibilityService {
 
         return false;
     }
+
     private AccessibilityNodeInfo findClickableButton(AccessibilityNodeInfo node) {
 
         if (node == null) return null;
@@ -397,7 +488,7 @@ public class ChatUssadAccessibilityService extends AccessibilityService {
                 if (t.contains("send") ||
                         t.contains("ok") ||
                         t.contains("yes") ||
-                        t.contains("确认")||
+                        t.contains("确认") ||
                         t.contains("إرسال")) {
                     return node;
                 }
@@ -412,8 +503,10 @@ public class ChatUssadAccessibilityService extends AccessibilityService {
 
         return null;
     }
+
     /**
      * 取消点击
+     *
      * @param dialog
      */
     private void clickCancel(AccessibilityNodeInfo dialog) {
@@ -425,8 +518,10 @@ public class ChatUssadAccessibilityService extends AccessibilityService {
         NodeUtils.clickByText(dialog, "Cancel");
         NodeUtils.clickByText(dialog, "取消");
     }
+
     /**
      * 不处理文本
+     *
      * @param dialog
      * @param text
      * @param dm
@@ -471,10 +566,10 @@ public class ChatUssadAccessibilityService extends AccessibilityService {
         float scaleY = full.getHeight() * 1f / dm.heightPixels;
 
         Rect scaled = new Rect(
-                (int)(rect.left * scaleX),
-                (int)(rect.top * scaleY),
-                (int)(rect.right * scaleX),
-                (int)(rect.bottom * scaleY)
+                (int) (rect.left * scaleX),
+                (int) (rect.top * scaleY),
+                (int) (rect.right * scaleX),
+                (int) (rect.bottom * scaleY)
         );
 
         Bitmap crop = safeCrop(full, scaled);
@@ -515,7 +610,7 @@ public class ChatUssadAccessibilityService extends AccessibilityService {
     private void sendResult(Bitmap bmp, String text) {
 
         try {
-            Log.i(Contact.TAG, "sendussd-结果1: "+text+"=="+bmp);
+            Log.i(Contact.TAG, "sendussd-结果1: " + text + "==" + bmp);
             Intent intent = new Intent(Contact.ACTION_USSD_RESULT);
             // ⭐ 状态判断
             String status = "result";
@@ -529,7 +624,7 @@ public class ChatUssadAccessibilityService extends AccessibilityService {
             intent.putExtra(Contact.EXTRA_TEXT, text);
 
 
-            if (bmp!=null){
+            if (bmp != null) {
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
                 // ⭐ 压缩（防止超1MB）
                 bmp.compress(Bitmap.CompressFormat.JPEG, 70, baos);
@@ -542,9 +637,10 @@ public class ChatUssadAccessibilityService extends AccessibilityService {
 
         } catch (Exception e) {
             e.printStackTrace();
-            Log.i(Contact.TAG, "sendussd-e: "+e.getMessage());
+            Log.i(Contact.TAG, "sendussd-e: " + e.getMessage());
         }
     }
+
     private Bitmap compressBitmap(Bitmap src) {
 
         int maxWidth = 800;
@@ -556,7 +652,7 @@ public class ChatUssadAccessibilityService extends AccessibilityService {
         return Bitmap.createScaledBitmap(
                 src,
                 maxWidth,
-                (int)(src.getHeight() * scale),
+                (int) (src.getHeight() * scale),
                 true
         );
     }
@@ -642,7 +738,7 @@ public class ChatUssadAccessibilityService extends AccessibilityService {
 
         if (!isFinalDialog(dialog)) return;
 
-        handleResult(dialog, text, "RESULT",dm);
+        handleResult(dialog, text, "RESULT", dm);
     }
 
     private boolean isFinalDialog(AccessibilityNodeInfo dialog) {
@@ -664,6 +760,7 @@ public class ChatUssadAccessibilityService extends AccessibilityService {
 
         return true;
     }
+
     private AccessibilityNodeInfo findByIds(AccessibilityNodeInfo node,
                                             String... ids) {
 
@@ -679,6 +776,7 @@ public class ChatUssadAccessibilityService extends AccessibilityService {
 
         return null;
     }
+
     private List<AccessibilityNodeInfo> findButtons(AccessibilityNodeInfo node) {
 
         List<AccessibilityNodeInfo> list = new ArrayList<>();
@@ -701,11 +799,10 @@ public class ChatUssadAccessibilityService extends AccessibilityService {
             collect(node.getChild(i), list);
         }
     }
-    private boolean isImmediateError(String text) {
+    private boolean isFinishedFail(String text){
         if (text == null) return false;
 
-        return text.contains("成功")
-                || text.contains("失败")
+        return  text.contains("失败")
                 || text.contains("错误")
                 || text.contains("无效")
                 || text.contains("MMI")
@@ -716,7 +813,7 @@ public class ChatUssadAccessibilityService extends AccessibilityService {
                 || text.contains("无法访问")
                 || text.toLowerCase().contains("error")
                 || text.contains("خطأ")
-                || text.contains("غير صالح")|| text.contains("Connection issue")
+                || text.contains("غير صالح") || text.contains("Connection issue")
                 || text.contains("مشكلة في الاتصال")
                 || text.contains("Cannot connect")
                 || text.contains("لا يمكن الاتصال")
@@ -730,15 +827,49 @@ public class ChatUssadAccessibilityService extends AccessibilityService {
                 || text.contains("مقطوع")
                 ;
     }
+    private boolean isImmediateError(String text) {
+        if (text == null) return false;
+
+        return text.contains("成功")
+                ||text.contains("success")
+                ||text.contains("النجاح")
+                ||text.contains("نجحت العملية")
+                ||text.contains("تمت العملية بنجاح")
+                || text.contains("失败")
+                || text.contains("错误")
+                || text.contains("无效")
+                || text.contains("MMI")
+                || text.contains("连接问题")
+                || text.contains("无法连接")
+                || text.contains("network")
+                || text.contains("invalid")
+                || text.contains("无法访问")
+                || text.toLowerCase().contains("error")
+                || text.contains("خطأ")
+                || text.contains("غير صالح") || text.contains("Connection issue")
+                || text.contains("مشكلة في الاتصال")
+                || text.contains("Cannot connect")
+                || text.contains("لا يمكن الاتصال")
+                || text.contains("Network exception")
+                || text.contains("استثناء في الشبكة")
+                || text.contains("Password error")
+                || text.contains("خطأ في كلمة المرور")
+                || text.contains("Password expired")
+                || text.contains("كلمة المرور منتهية الصلاحية")
+                || text.contains("Interrupted")
+                || text.contains("مقطوع")
+                ;
+    }
+
     private void handleResult(AccessibilityNodeInfo dialog,
                               String text,
-                              String type,DisplayMetrics dm) {
+                              String type, DisplayMetrics dm) {
 
         handler.postDelayed(() -> {
 
 //            Bitmap bmp = captureAndSend(dialog, text, dm);
 
-            sendResult(null,type + ":" + text);
+            sendResult(null, type + ":" + text);
 
             clickClose(dialog);
 
@@ -746,6 +877,7 @@ public class ChatUssadAccessibilityService extends AccessibilityService {
 
         }, 500);
     }
+
     private void clickClose(AccessibilityNodeInfo dialog) {
 
         // ⭐ 系统OK按钮（最稳）
@@ -763,6 +895,7 @@ public class ChatUssadAccessibilityService extends AccessibilityService {
         NodeUtils.clickByText(dialog, "OK");
         NodeUtils.clickByText(dialog, "确定");
     }
+
     private void resetState() {
 
         isProcessing = false;
@@ -776,7 +909,9 @@ public class ChatUssadAccessibilityService extends AccessibilityService {
         UssdController.hasInput = false;
         lastDialogHash = 0;
     }
+
     @Override
-    public void onInterrupt() {}
+    public void onInterrupt() {
+    }
 
 }

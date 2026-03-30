@@ -1,8 +1,6 @@
 package com.project.setussd.network;
 
 
-import com.project.setussd.bean.ApiCallback;
-
 import java.util.Map;
 
 /**

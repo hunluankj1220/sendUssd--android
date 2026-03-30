@@ -1,4 +1,4 @@
-package com.project.setussd.bean;
+package com.project.setussd.network;
 
 public class ApiResponse<T> {
     public int code;

@@ -59,22 +59,6 @@ public class NodeUtils {
 
         return sb.toString();
     }
-
-//    public static void clickByText(AccessibilityNodeInfo node, String text) {
-//
-//        if (node == null) return;
-//
-//        if (node.getText() != null &&
-//                node.getText().toString().equalsIgnoreCase(text)) {
-//
-//            node.performAction(AccessibilityNodeInfo.ACTION_CLICK);
-//            return;
-//        }
-//
-//        for (int i = 0; i < node.getChildCount(); i++) {
-//            clickByText(node.getChild(i), text);
-//        }
-//    }
 public static boolean click(AccessibilityNodeInfo root, String id) {
 
 //        AccessibilityNodeInfo node = find(root, id);
@@ -129,34 +113,6 @@ public static boolean click(AccessibilityNodeInfo root, String id) {
         }
 
         return collectText(root);
-        // ⭐ 1. 优先取系统 message（关键优化点）
-//        AccessibilityNodeInfo msg =
-//                NodeUtils.find(root, "android:id/message");
-//
-//        if (msg != null && msg.getText() != null) {
-//
-//            String text = msg.getText().toString();
-//
-//            if (!text.trim().isEmpty()) {
-//                return text;
-//            }
-//        }
-//
-//        // ⭐ 2. 再尝试 dialog 内 message（部分ROM）
-//        AccessibilityNodeInfo msg2 =
-//                NodeUtils.find(dialog, "android:id/message");
-//
-//        if (msg2 != null && msg2.getText() != null) {
-//
-//            String text = msg2.getText().toString();
-//
-//            if (!text.trim().isEmpty()) {
-//                return text;
-//            }
-//        }
-//
-//        // ⭐ 3. fallback：全文扫描
-//        return NodeUtils.getAllText(dialog);
     }
 
 }
