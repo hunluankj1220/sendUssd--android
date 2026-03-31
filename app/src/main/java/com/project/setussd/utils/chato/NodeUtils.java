@@ -18,33 +18,12 @@ public class NodeUtils {
         return list != null && !list.isEmpty() ? list.get(0) : null;
     }
 
-//    public static void click(AccessibilityNodeInfo root, String id) {
-//        AccessibilityNodeInfo node = find(root, id);
-//        if (node != null) {
-//            node.performAction(AccessibilityNodeInfo.ACTION_CLICK);
-//        }
-//    }
-
     public static String getAllText(AccessibilityNodeInfo node) {
-
-        StringBuilder sb = new StringBuilder();
-
-        collectText(node);
-
-        return sb.toString();
+        if (node == null) return "";
+        return collectText(node);
     }
 
-    private static String  collectText(AccessibilityNodeInfo node) {
-
-//        if (node == null) return;
-//
-//        if (node.getText() != null) {
-//            sb.append(node.getText()).append("\n");
-//        }
-//
-//        for (int i = 0; i < node.getChildCount(); i++) {
-//            collectText(node.getChild(i), sb);
-//        }
+    private static String collectText(AccessibilityNodeInfo node) {
         if (node == null) return "";
 
         StringBuilder sb = new StringBuilder();
@@ -54,54 +33,63 @@ public class NodeUtils {
         }
 
         for (int i = 0; i < node.getChildCount(); i++) {
-            sb.append(collectText(node.getChild(i)));
+            AccessibilityNodeInfo child = node.getChild(i);
+            if (child != null) {
+                sb.append(collectText(child));
+                child.recycle();
+            }
         }
 
         return sb.toString();
     }
-public static boolean click(AccessibilityNodeInfo root, String id) {
 
-//        AccessibilityNodeInfo node = find(root, id);
-//
-//        if (node != null) {
-//            return node.performAction(AccessibilityNodeInfo.ACTION_CLICK);
-//        }
-    if (root == null) return false;
+    public static boolean click(AccessibilityNodeInfo root, String id) {
+        if (root == null) return false;
 
-    if (id.equals(root.getViewIdResourceName())) {
-        return root.performAction(AccessibilityNodeInfo.ACTION_CLICK);
-    }
-
-    for (int i = 0; i < root.getChildCount(); i++) {
-        if (click(root.getChild(i), id)) return true;
-    }
-
-    return false;
-}
-    public static boolean clickByText(AccessibilityNodeInfo node, String text) {
-
-        if (node == null) return false;
-
-        if (node.getText() != null) {
-
-            String t = node.getText().toString().toLowerCase();
-
-            if (t.contains(text.toLowerCase()) && node.isClickable()) {
-
-                return node.performAction(AccessibilityNodeInfo.ACTION_CLICK);
-            }
+        if (id.equals(root.getViewIdResourceName())) {
+            return root.performAction(AccessibilityNodeInfo.ACTION_CLICK);
         }
 
-        for (int i = 0; i < node.getChildCount(); i++) {
-            if (clickByText(node.getChild(i), text)) {
-                return true;
+        for (int i = 0; i < root.getChildCount(); i++) {
+            AccessibilityNodeInfo child = root.getChild(i);
+            if (child != null) {
+                if (click(child, id)) {
+                    child.recycle();
+                    return true;
+                }
+                child.recycle();
             }
         }
 
         return false;
     }
+
+    public static boolean clickByText(AccessibilityNodeInfo node, String text) {
+        if (node == null) return false;
+
+        if (node.getText() != null) {
+            String t = node.getText().toString().toLowerCase();
+            if (t.contains(text.toLowerCase()) && node.isClickable()) {
+                return node.performAction(AccessibilityNodeInfo.ACTION_CLICK);
+            }
+        }
+
+        for (int i = 0; i < node.getChildCount(); i++) {
+            AccessibilityNodeInfo child = node.getChild(i);
+            if (child != null) {
+                if (clickByText(child, text)) {
+                    child.recycle();
+                    return true;
+                }
+                child.recycle();
+            }
+        }
+
+        return false;
+    }
+
     public static String getUssdResultText(AccessibilityNodeInfo root,
-                                     AccessibilityNodeInfo dialog) {
+                                           AccessibilityNodeInfo dialog) {
         if (root == null) return null;
 
         List<AccessibilityNodeInfo> list =
@@ -114,5 +102,4 @@ public static boolean click(AccessibilityNodeInfo root, String id) {
 
         return collectText(root);
     }
-
 }

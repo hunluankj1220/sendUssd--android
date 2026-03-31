@@ -1,24 +1,17 @@
 package com.project.setussd.utils.chato;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+
 public class UssdState {
 
-//    // ⭐ 当前输入弹窗计数
-//    public static int inputDialogCount = 0;
-//
-//    // ⭐ 防重复输入
-//    public static boolean hasInput = false;
-//
-//    // ⭐ 防重复截图
-//    public static boolean hasCaptured = false;
-
-    public static int inputCount = 0;
-
-    public static boolean handledFirst = false;
-    public static boolean handledSecond = false;
+    public static AtomicInteger inputCount = new AtomicInteger(0);
+    public static AtomicBoolean handledFirst = new AtomicBoolean(false);
+    public static AtomicBoolean handledSecond = new AtomicBoolean(false);
 
     public static void reset() {
-        inputCount = 0;
-        handledFirst = false;
-        handledSecond = false;
+        inputCount.set(0);
+        handledFirst.set(false);
+        handledSecond.set(false);
     }
 }
