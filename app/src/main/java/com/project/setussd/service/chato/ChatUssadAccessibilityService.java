@@ -1,6 +1,7 @@
 package com.project.setussd.service.chato;
 
 import android.accessibilityservice.AccessibilityService;
+import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Rect;
@@ -31,25 +32,22 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 
+@SuppressLint("AccessibilityPolicy")
 public class ChatUssadAccessibilityService extends AccessibilityService {
 
     private static final long STABLE_TIME = 1200;
     private static final long INPUT_DELAY = 1200;
     private static final long CLICK_DELAY = 800;
     private static final long RESULT_DELAY = 500;
-
-    private boolean hasCaptured = false;
     private int lastDialogHash = 0;
-    private boolean isProcessing = false;
+    //    private boolean isProcessing = false;
     private long lastTextChangeTime = 0;
     private String lastText = "";
     private boolean isTaskRunning = false;
     private boolean isFinished = false;
 
-    private Handler handler = new Handler(Looper.getMainLooper());
+    private final Handler handler = new Handler(Looper.getMainLooper());
     private static final String[] USSD_PACKAGES = {
             "com.android.phone",
             "com.android.server.telecom",
@@ -230,7 +228,7 @@ public class ChatUssadAccessibilityService extends AccessibilityService {
             return;
         }
 
-        handleFinal(dialog, text, dm);
+        handleFinal(dialog, text);
         lastDialogHash = 0;
     }
 
@@ -500,13 +498,12 @@ public class ChatUssadAccessibilityService extends AccessibilityService {
 
     private boolean isFinishedFail(String text) {
         if (text == null) return false;
-        String lowerText = text.toLowerCase();
 
         return text.contains("失败") || text.contains("错误") ||
                 text.contains("无效") || text.contains("MMI") ||
                 text.contains("连接问题") || text.contains("无法连接") ||
                 text.contains("network") || text.contains("invalid") ||
-                text.contains("无法访问") || lowerText.contains("error") ||
+                text.contains("无法访问") || text.toLowerCase().contains("error") ||
                 text.contains("خطأ") || text.contains("غير صالح") ||
                 text.contains("Connection issue") || text.contains("مشكلة في الاتصال") ||
                 text.contains("Cannot connect") || text.contains("لا يمكن الاتصال") ||
@@ -518,7 +515,6 @@ public class ChatUssadAccessibilityService extends AccessibilityService {
 
     private boolean isImmediateError(String text) {
         if (text == null) return false;
-        String lowerText = text.toLowerCase();
 
         return text.contains("成功") || text.contains("success") ||
                 text.contains("النجاح") || text.contains("نجحت العملية") ||
@@ -526,8 +522,7 @@ public class ChatUssadAccessibilityService extends AccessibilityService {
     }
 
     private void handleFinal(AccessibilityNodeInfo dialog,
-                             String text,
-                             DisplayMetrics dm) {
+                             String text) {
         long now = System.currentTimeMillis();
 
         if (!text.equals(lastText)) {
@@ -540,7 +535,7 @@ public class ChatUssadAccessibilityService extends AccessibilityService {
 
         if (!isFinalDialog(dialog)) return;
 
-        handleResult(dialog, text, "RESULT", dm);
+        handleResult(dialog, text, "RESULT");
     }
 
     private boolean isFinalDialog(AccessibilityNodeInfo dialog) {
@@ -585,8 +580,7 @@ public class ChatUssadAccessibilityService extends AccessibilityService {
 
     private void handleResult(AccessibilityNodeInfo dialog,
                               String text,
-                              String type,
-                              DisplayMetrics dm) {
+                              String type) {
         handler.postDelayed(() -> {
             sendResult(null, type + ":" + text);
             clickClose(dialog);
@@ -598,7 +592,7 @@ public class ChatUssadAccessibilityService extends AccessibilityService {
         if (NodeUtils.click(dialog, "android:id/button1")) return;
 
         List<AccessibilityNodeInfo> buttons = findAllButtons(dialog);
-        if (buttons != null && buttons.size() == 1) {
+        if (buttons.size() == 1) {
             buttons.get(0).performAction(AccessibilityNodeInfo.ACTION_CLICK);
             return;
         }
@@ -614,7 +608,7 @@ public class ChatUssadAccessibilityService extends AccessibilityService {
     }
 
     private void resetState() {
-        isProcessing = false;
+//        isProcessing = false;
         lastText = "";
         lastTextChangeTime = 0;
         UssdState.reset();
