@@ -1,6 +1,8 @@
 package com.project.setussd.network;
 
 
+import com.project.setussd.activity.chato.ChatOneActivity;
+
 import java.util.Map;
 
 /**
@@ -8,7 +10,6 @@ import java.util.Map;
  */
 public class ApiClient {
 
-    private static final String BASE_URL = "https://你的接口地址";
 
     // Activity传参直接透传
     public static <T> void request(
@@ -18,7 +19,22 @@ public class ApiClient {
             ApiCallback<T> callback
     ) {
         OkHttpManager.getInstance().post(
-                BASE_URL + path,
+                ChatOneActivity.serverURL + path,
+                params,
+                clazz,
+                callback
+        );
+    }
+
+    // Activity传参直接透传
+    public static <T> void request2(
+            String path,
+            Map<String, String> params,
+            Class<T> clazz,
+            ApiCallback<T> callback
+    ) {
+        OkHttpManager.getInstance().get(
+                ChatOneActivity.serverURL + path,
                 params,
                 clazz,
                 callback

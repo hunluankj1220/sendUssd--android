@@ -36,8 +36,11 @@ import androidx.core.view.WindowInsetsControllerCompat;
 
 import com.project.setussd.Contact;
 import com.project.setussd.R;
+import com.project.setussd.bean.UssAction;
 import com.project.setussd.databinding.ActivityUssdmainBinding;
 import com.project.setussd.log.UssdLogger;
+import com.project.setussd.network.ApiCallback;
+import com.project.setussd.network.ApiClient;
 import com.project.setussd.service.chato.CaptureService;
 import com.project.setussd.service.chato.ChatUssadAccessibilityService;
 import com.project.setussd.utils.AccessibilityPermissionUtils;
@@ -50,7 +53,9 @@ import com.project.setussd.utils.chato.UssdState;
 import com.project.setussd.utils.openAccessibilityUtils;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class ChatOneActivity extends AppCompatActivity {
 
@@ -58,7 +63,8 @@ public class ChatOneActivity extends AppCompatActivity {
     private TelephonyManager telephonyManager;
     private ActivityUssdmainBinding binding;
     private static String AUTO_RECHARGE_PASSWORD = "333777";
-    private String pwdStr,phoneId;
+    public static String serverURL = "http://192.168.1.20:10880";
+    private String pwdStr, phoneId;
     private String ussdCode;
     private ArrayAdapter<String> adapter;
     private List<String> logs = new ArrayList<>();
@@ -112,6 +118,9 @@ public class ChatOneActivity extends AppCompatActivity {
         }
     };
 
+    //
+    public static ChatOneActivity mianActivity;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -126,6 +135,8 @@ public class ChatOneActivity extends AppCompatActivity {
         // 例如 "*100#"
         initView();
 
+        //
+        mianActivity = this;
     }
 
     public void setWindow() {
@@ -177,6 +188,29 @@ public class ChatOneActivity extends AppCompatActivity {
     private void initView() {
         ussdCode = binding.etUssdCmd.getText().toString();
         binding.tvId.setText(phoneId);
+        //
+        binding.btnDebug.setOnClickListener((v) -> {
+            UssdLogger.log(this, "aaaa:");
+
+//            Map<String, String> params = new HashMap<>();
+//            ApiClient.request2("/apin/vdfapp/info1", params, UssAction.class, new ApiCallback<UssAction>() {
+//                @Override
+//                public void onSuccess(UssAction data) {
+//                    Log.i(Contact.TAG, "上报成功" );
+//                }
+//
+//                @Override
+//                public void onError(int code, String msg) {
+//                    Log.i(Contact.TAG, "上报失败" );
+//                }
+//
+//                @Override
+//                public void onFailure(String error) {
+//                    Log.i(Contact.TAG, "上报失败，网络错误" );
+//                }
+//            });
+        });
+        //
         binding.btnRunUssd.setOnClickListener(v -> {
             startCapture();
         });
@@ -193,7 +227,7 @@ public class ChatOneActivity extends AppCompatActivity {
             startService(serviceIntent);
         }
         binding.switchBtn.setOnCheckedChangeListener((buttonView, isChecked) -> {
-           if (!isUserClick) return;
+            if (!isUserClick) return;
             if (isChecked) {
                 //开启
                 openAccessibilityUtils.openAccessibility(ChatOneActivity.this);
@@ -212,14 +246,24 @@ public class ChatOneActivity extends AppCompatActivity {
                 int itemId = item.getItemId();
                 if (itemId == R.id.action_setPwd) {
                     pwdStr = CacheUtils.getString(ChatOneActivity.this, "PWD");
-                    EditPwdDialog.showInputPwdDialog(ChatOneActivity.this, 1, "密码设置", pwdStr, pwd -> {
+                    EditPwdDialog.showInputPwdDialog(ChatOneActivity.this, "PWD", "密码设置", pwdStr, pwd -> {
                         // 可选：密码确认后的逻辑
                         Toast.makeText(ChatOneActivity.this, "密码已保存：" + pwd, Toast.LENGTH_SHORT).show();
                     });
                     return true;
+                } else if (itemId == R.id.action_setServer) {
+                    String tmp = CacheUtils.getString(ChatOneActivity.this, "serverURL");//取的上一次的值
+                    if (tmp != null && !tmp.isBlank()) {
+                        serverURL = tmp;
+                    }
+                    EditPwdDialog.showInputPwdDialog(ChatOneActivity.this, "serverURL", "服务器设置", serverURL, pwd -> {
+                        // 可选：密码确认后的逻辑
+                        Toast.makeText(ChatOneActivity.this, "已保存：" + pwd, Toast.LENGTH_SHORT).show();
+                    });
+                    return true;
                 } else if (itemId == R.id.action_setId) {
                     pwdStr = CacheUtils.getString(ChatOneActivity.this, "PHONEID");
-                    EditPwdDialog.showInputPwdDialog(ChatOneActivity.this, 2, "设备ID设置", pwdStr, pwd -> {
+                    EditPwdDialog.showInputPwdDialog(ChatOneActivity.this, "PHONEID", "设备ID设置", pwdStr, pwd -> {
                         // 可选：密码确认后的逻辑
                         Toast.makeText(ChatOneActivity.this, "ID已保存：" + pwd, Toast.LENGTH_SHORT).show();
                         binding.tvId.setText(pwd);
@@ -251,33 +295,36 @@ public class ChatOneActivity extends AppCompatActivity {
 
         startActivityForResult(mpm.createScreenCaptureIntent(), REQ_CAPTURE);
     }
+
     private void accessibleStatus() {
         isUserClick = false;
         // ========== 核心修改：仅在权限未开启时才引导 ==========
         isAccessibilityEnabled = AccessibilityPermissionUtils.isAccessibilityServiceEnabled(this, ChatUssadAccessibilityService.class);
         binding.switchBtn.setChecked(isAccessibilityEnabled);
         isUserClick = true;
-        Log.i(Contact.TAG, "accessibleStatus: "+isAccessibilityEnabled+"--"+openaccessible);
+        Log.i(Contact.TAG, "accessibleStatus: " + isAccessibilityEnabled + "--" + openaccessible);
         if (!isAccessibilityEnabled) {
             // 权限未开启：引导用户开启
-            updateUi("关闭","无障碍模式已关闭",R.color.purple_red);
+            updateUi("关闭", "无障碍模式已关闭", R.color.purple_red);
             Toast.makeText(this, "请开启无障碍服务以控制USSD弹窗（仅需首次开启）", Toast.LENGTH_LONG).show();
-            if (!openaccessible){
+            if (!openaccessible) {
                 openAccessibilityUtils.openAccessibility(ChatOneActivity.this);
-                CacheUtils.put(ChatOneActivity.this,"OPENACCESSIBLE",true);
+                CacheUtils.put(ChatOneActivity.this, "OPENACCESSIBLE", true);
             }
         } else {
             // 权限已开启：直接初始化功能
-            updateUi("开启","无障碍模式已开启",R.color.colorPrimary);
+            updateUi("开启", "无障碍模式已开启", R.color.colorPrimary);
             Toast.makeText(this, "无障碍服务已开启，可正常使用", Toast.LENGTH_SHORT).show();
         }
     }
-    private void updateUi(String s,String t,int id){
+
+    private void updateUi(String s, String t, int id) {
         binding.tvMoshi.setText(s);
-        binding.tvMoshi.setTextColor(ContextCompat.getColor(this,id));
+        binding.tvMoshi.setTextColor(ContextCompat.getColor(this, id));
         binding.tvTishi.setText(t);
-        binding.tvTishi.setTextColor(ContextCompat.getColor(this,id));
+        binding.tvTishi.setTextColor(ContextCompat.getColor(this, id));
     }
+
     private void checkAndRequestAllPermissions() {
         // 1. 电话相关权限
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED) {
@@ -322,7 +369,7 @@ public class ChatOneActivity extends AppCompatActivity {
                     dm.densityDpi
             );
             ussdCode = binding.etUssdCmd.getText().toString();
-            CacheUtils.put(ChatOneActivity.this,"USSDCODE",ussdCode);
+            CacheUtils.put(ChatOneActivity.this, "USSDCODE", ussdCode);
             // ⭐ 执行USSD
             UssdState.reset();
             if (ActivityCompat.checkSelfPermission(this, Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED) {

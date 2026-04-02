@@ -17,7 +17,7 @@ public class EditPwdDialog {
      * @param defaultPwd 默认密码
      * @param confirmListener 确认按钮回调
      */
-    public static void showInputPwdDialog(Context context,int type,String title, String defaultPwd, OnPwdConfirmListener confirmListener) {
+    public static void showInputPwdDialog(Context context,String key,String title, String defaultPwd, OnPwdConfirmListener confirmListener) {
         // 创建Dialog构建器
         AlertDialog.Builder builder = new AlertDialog.Builder(context);
         LayoutInflater inflater = LayoutInflater.from(context);
@@ -47,13 +47,7 @@ public class EditPwdDialog {
         btnConfirm.setOnClickListener(v -> {
             String inputPwd = inputField.getText().toString().trim();
             // 保存到缓存
-            if (type == 1){
-                //密码
-                CacheUtils.put(context, "PWD", inputPwd);
-            }else if(type == 2){
-                //id
-                CacheUtils.put(context, "PHONEID", inputPwd);
-            }
+            CacheUtils.put(context, key, inputPwd);
 
             // 回调通知外部
             if (confirmListener != null) {

