@@ -232,7 +232,7 @@
         android:background="@color/grap0"
         android:orientation="vertical">
 
-        <LinearLayout
+        <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal">
@@ -240,18 +240,19 @@
             <EditText
                 android:id="@+id/et_ussd_cmd"
                 android:layout_width="220dp"
-                android:layout_height="wrap_content"
+                android:layout_height="40dp"
+                android:textSize="14dp"
                 android:hint="输入埃及运营商USSD命令（如*101#）"
                 android:text="*9*7*01080975195*100#" />
 
             <Button
                 android:id="@+id/btn_run_ussd"
                 android:layout_width="120dp"
-                android:layout_height="wrap_content"
-                android:layout_marginLeft="20dp"
+                android:layout_height="40dp"
                 android:text="sendUsdsd"
+                android:layout_alignParentRight="true"
                 android:textSize="12dp" />
-        </LinearLayout>
+        </RelativeLayout>
 
 
         <TextView
@@ -277,22 +278,20 @@
             android:textSize="16sp"
             android:textStyle="bold"
             android:visibility="visible" />
-
+        <ImageView
+            android:id="@+id/screenshotImageView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="8dp"
+            android:adjustViewBounds="true"
+            android:scaleType="fitCenter"
+            android:visibility="gone" />
         <ScrollView
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
+            android:visibility="gone"
             android:background="@drawable/screenshot_background">
-
-            <ImageView
-                android:id="@+id/screenshotImageView"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_margin="8dp"
-                android:adjustViewBounds="true"
-                android:scaleType="fitCenter"
-                android:visibility="gone" />
-
         </ScrollView>
 
         <ListView

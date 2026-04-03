@@ -323,6 +323,8 @@ public class ChatOneActivity extends AppCompatActivity {
         binding.tvMoshi.setTextColor(ContextCompat.getColor(this, id));
         binding.tvTishi.setText(t);
         binding.tvTishi.setTextColor(ContextCompat.getColor(this, id));
+        //状态提示
+        binding.tvStatus.setText("链接异常");
     }
 
     private void checkAndRequestAllPermissions() {
