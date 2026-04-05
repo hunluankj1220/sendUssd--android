@@ -14,40 +14,52 @@
         android:layout_height="wrap_content"
         android:background="@color/grap0"
         android:orientation="vertical"
-        android:paddingTop="30px">
+        android:paddingTop="0px">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_margin="20px"
+            android:layout_margin="5px"
             android:orientation="vertical">
 
-            <RelativeLayout
+            <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="100px"
+                android:layout_height="wrap_content"
                 android:layout_gravity="center_vertical"
-                android:gravity="center_vertical"
+                android:orientation="horizontal"
                 android:paddingLeft="10px"
                 android:paddingRight="10px">
 
                 <TextView
-                    android:layout_width="wrap_content"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
+                    android:layout_weight="1"
                     android:text="设备ID" />
+
 
                 <TextView
                     android:id="@+id/tv_Id"
-                    android:layout_width="wrap_content"
+                    android:layout_width="0dp"
+                    android:layout_height="30dp"
+                    android:layout_weight="3"
+                    android:gravity="center"
+                    android:text="tmp" />
+
+                <TextView
+                    android:id="@+id/tv_status"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_alignParentRight="true"
-                    android:text="100" />
-            </RelativeLayout>
+                    android:layout_weight="1"
+                    android:gravity="end"
+                    android:text="连接异常"
+                    android:textColor="@color/purple_red" />
+            </LinearLayout>
+
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="2px"
                 android:layout_gravity="bottom"
-                android:layout_marginTop="20px"
                 android:background="@color/grap"
                 android:gravity="end" />
         </LinearLayout>
@@ -55,7 +67,7 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_margin="20px"
+            android:layout_margin="5px"
             android:orientation="vertical">
 
             <LinearLayout
@@ -71,12 +83,12 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="执行USSD" />
+                    android:text="无障碍模式" />
 
                 <androidx.appcompat.widget.SwitchCompat
                     android:id="@+id/switchBtn"
                     android:layout_width="0dp"
-                    android:layout_height="40dp"
+                    android:layout_height="30dp"
                     android:layout_weight="1"
                     android:showText="false"
                     android:switchMinWidth="0dp"
@@ -87,71 +99,74 @@
                     app:trackTint="@color/switch_track_colors" />
 
                 <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_alignRight="@id/switchBtn"
-                    android:layout_weight="1"
-                    android:paddingLeft="20px"
-                    android:text="无障碍模式" />
-
-                <TextView
                     android:id="@+id/tv_moshi"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:gravity="end"
-                    android:text="开启"
+                    android:text="未知的"
                     android:textColor="@color/colorPrimary" />
             </LinearLayout>
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="2px"
-                android:layout_marginTop="20px"
                 android:background="@color/grap" />
         </LinearLayout>
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_margin="20px"
+            android:layout_margin="5px"
             android:orientation="vertical">
 
-            <RelativeLayout
+            <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="100px"
+                android:layout_height="wrap_content"
                 android:layout_gravity="center_vertical"
-                android:gravity="center_vertical"
+                android:orientation="horizontal"
                 android:paddingLeft="10px"
                 android:paddingRight="10px">
 
                 <TextView
-                    android:layout_width="wrap_content"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:text="链接状态" />
+                    android:layout_weight="1"
+                    android:text="执行任务" />
+
+                <androidx.appcompat.widget.SwitchCompat
+                    android:id="@+id/switchBtnTask"
+                    android:layout_width="0dp"
+                    android:layout_height="30dp"
+                    android:layout_weight="1"
+                    android:showText="false"
+                    android:switchMinWidth="0dp"
+                    android:switchPadding="0dp"
+                    android:thumb="@drawable/switch_thumb"
+                    android:track="@drawable/switch_track"
+                    app:thumbTint="@null"
+                    app:trackTint="@color/switch_track_colors" />
 
                 <TextView
-                    android:id="@+id/tv_status"
+                    android:id="@+id/tv_task"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_alignParentRight="true"
-                    android:text="连接异常"
-                    android:textColor="@color/purple_red" />
-            </RelativeLayout>
+                    android:layout_weight="1"
+                    android:gravity="end"
+                    android:text="未知的"
+                    android:textColor="@color/colorPrimary" />
+            </LinearLayout>
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="2px"
-                android:layout_gravity="bottom"
-                android:layout_marginTop="20px"
-                android:background="@color/grap"
-                android:gravity="end" />
+                android:background="@color/grap" />
         </LinearLayout>
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_margin="20px"
+            android:layout_margin="5px"
             android:orientation="vertical">
 
             <RelativeLayout
@@ -180,7 +195,6 @@
                 android:layout_width="match_parent"
                 android:layout_height="2px"
                 android:layout_gravity="bottom"
-                android:layout_marginTop="20px"
                 android:background="@color/grap"
                 android:gravity="end" />
         </LinearLayout>
@@ -188,7 +202,7 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_margin="20px"
+            android:layout_margin="5px"
             android:orientation="vertical">
 
             <RelativeLayout
@@ -217,7 +231,6 @@
                 android:layout_width="match_parent"
                 android:layout_height="2px"
                 android:layout_gravity="bottom"
-                android:layout_marginTop="20px"
                 android:background="@color/grap"
                 android:gravity="end" />
         </LinearLayout>
@@ -226,9 +239,10 @@
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="0dp"
         android:layout_marginLeft="20px"
         android:layout_marginRight="20px"
+        android:layout_weight="1"
         android:background="@color/grap0"
         android:orientation="vertical">
 
@@ -278,27 +292,19 @@
             android:textStyle="bold"
             android:visibility="visible" />
 
-        <ScrollView
+        <ImageView
+            android:id="@+id/screenshotImageView"
             android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"
-            android:background="@drawable/screenshot_background">
-
-            <ImageView
-                android:id="@+id/screenshotImageView"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_margin="8dp"
-                android:adjustViewBounds="true"
-                android:scaleType="fitCenter"
-                android:visibility="gone" />
-
-        </ScrollView>
+            android:layout_height="50dp"
+            android:adjustViewBounds="true"
+            android:scaleType="fitCenter"
+            android:visibility="gone" />
 
         <ListView
             android:id="@+id/listview"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
+            android:layout_marginBottom="10dp"
             android:background="@color/gray_light" />
     </LinearLayout>
 

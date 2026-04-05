@@ -14,4 +14,10 @@ public class Contact {
     // ⭐ 是否只处理第二个输入框
     public static boolean ONLY_SECOND_INPUT = true;
     public static int lastDialogHash = 0;
+
+
+    //
+    // 配置的数据
+    public static String serverURL = "http://192.168.1.20:10880"; // 服务器地址
+    public static String phoneId; // 设备ID
 }

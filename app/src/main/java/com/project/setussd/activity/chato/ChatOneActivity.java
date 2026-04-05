@@ -21,18 +21,25 @@ import android.provider.Settings;
 import android.telephony.TelephonyManager;
 import android.util.DisplayMetrics;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.Window;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
+import android.widget.EditText;
 import android.widget.PopupMenu;
 import android.widget.Toast;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
+import androidx.work.OneTimeWorkRequest;
+import androidx.work.PeriodicWorkRequest;
+import androidx.work.WorkManager;
 
 import com.project.setussd.Contact;
 import com.project.setussd.R;
@@ -51,11 +58,13 @@ import com.project.setussd.utils.chato.UssdController;
 import com.project.setussd.utils.chato.UssdParser;
 import com.project.setussd.utils.chato.UssdState;
 import com.project.setussd.utils.openAccessibilityUtils;
+import com.project.setussd.work.MyWorker1;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 public class ChatOneActivity extends AppCompatActivity {
 
@@ -63,14 +72,18 @@ public class ChatOneActivity extends AppCompatActivity {
     private TelephonyManager telephonyManager;
     private ActivityUssdmainBinding binding;
     private static String AUTO_RECHARGE_PASSWORD = "333777";
-    public static String serverURL = "http://192.168.1.20:10880";
-    private String pwdStr, phoneId;
+
+
+    private String pwdStr;
     private String ussdCode;
     private ArrayAdapter<String> adapter;
     private List<String> logs = new ArrayList<>();
     private boolean isAccessibilityEnabled;
+
     private boolean isUserClick = true;
-    private boolean openaccessible;
+
+    private boolean openaccessible; // 无障碍模式
+
     private BroadcastReceiver logReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -128,16 +141,41 @@ public class ChatOneActivity extends AppCompatActivity {
         setContentView(binding.getRoot());
         CacheUtils.put(this, "PWD", "333777");
         openaccessible = CacheUtils.getBoolean(ChatOneActivity.this, "OPENACCESSIBLE");
-        phoneId = CacheUtils.getString(ChatOneActivity.this, "PHONEID");
+
+        //
+        Contact.phoneId = CacheUtils.getString(ChatOneActivity.this, "PHONEID");
+        if (Contact.phoneId == null || Contact.phoneId.isBlank()) {
+            Contact.phoneId = "tmp_" + System.currentTimeMillis();
+            CacheUtils.put(ChatOneActivity.this, "PHONEID", Contact.phoneId);// 保存到缓存
+        }
+        //
+        String tmpServerURL = CacheUtils.getString(ChatOneActivity.this, "serverURL");
+        if (tmpServerURL != null && !tmpServerURL.isBlank()) {
+            Contact.serverURL = tmpServerURL;
+        }
+
+        //
         setWindow();
         checkAndRequestAllPermissions();
         accessibleStatus();
+
         // 例如 "*100#"
         initView();
 
         //
         mianActivity = this;
+
+        //
+        // 创建一次性任务请求
+//        OneTimeWorkRequest uploadWork = new OneTimeWorkRequest.Builder(MyWorker1.class).build();
+//        // 提交任务
+//        WorkManager.getInstance(this).enqueue(uploadWork);
+
+        periodicWork = new PeriodicWorkRequest.Builder(MyWorker1.class, 5, TimeUnit.SECONDS).build();
+        WorkManager.getInstance(this).enqueue(periodicWork);
     }
+
+    PeriodicWorkRequest periodicWork;
 
     public void setWindow() {
         Window window = getWindow();
@@ -187,28 +225,30 @@ public class ChatOneActivity extends AppCompatActivity {
 
     private void initView() {
         ussdCode = binding.etUssdCmd.getText().toString();
-        binding.tvId.setText(phoneId);
+        binding.tvId.setText(Contact.phoneId);
         //
         binding.btnDebug.setOnClickListener((v) -> {
-            UssdLogger.log(this, "aaaa:");
+            String text = "test_message";
+            UssdLogger.log(this, text);
+            //
+            Map<String, String> params = new HashMap<>();
+            params.put("msg", text);
+            ApiClient.request("/apin/vdfapp/msg", params, UssAction.class, new ApiCallback<UssAction>() {
+                @Override
+                public void onSuccess(UssAction data) {
+                    UssdLogger.log(ChatOneActivity.this, "上报成功");
+                }
 
-//            Map<String, String> params = new HashMap<>();
-//            ApiClient.request2("/apin/vdfapp/info1", params, UssAction.class, new ApiCallback<UssAction>() {
-//                @Override
-//                public void onSuccess(UssAction data) {
-//                    Log.i(Contact.TAG, "上报成功" );
-//                }
-//
-//                @Override
-//                public void onError(int code, String msg) {
-//                    Log.i(Contact.TAG, "上报失败" );
-//                }
-//
-//                @Override
-//                public void onFailure(String error) {
-//                    Log.i(Contact.TAG, "上报失败，网络错误" );
-//                }
-//            });
+                @Override
+                public void onError(int code, String msg) {
+                    UssdLogger.log(ChatOneActivity.this, "上报失败");
+                }
+
+                @Override
+                public void onFailure(String error) {
+                    UssdLogger.log(ChatOneActivity.this, "上报失败，网络错误");
+                }
+            });
         });
         //
         binding.btnRunUssd.setOnClickListener(v -> {
@@ -237,6 +277,13 @@ public class ChatOneActivity extends AppCompatActivity {
                 openAccessibilityUtils.openAccessibility(ChatOneActivity.this);
             }
         });
+        binding.switchBtnTask.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (isChecked) {
+
+            } else {
+
+            }
+        });
         binding.titleBar.tvSetPwd.setOnClickListener(v -> {
             PopupMenu popupMenu = new PopupMenu(this, v);
             //加载popu菜单
@@ -252,24 +299,27 @@ public class ChatOneActivity extends AppCompatActivity {
                     });
                     return true;
                 } else if (itemId == R.id.action_setServer) {
-                    String tmp = CacheUtils.getString(ChatOneActivity.this, "serverURL");//取的上一次的值
-                    if (tmp != null && !tmp.isBlank()) {
-                        serverURL = tmp;
-                    }
-                    EditPwdDialog.showInputPwdDialog(ChatOneActivity.this, "serverURL", "服务器设置", serverURL, pwd -> {
-                        // 可选：密码确认后的逻辑
-                        Toast.makeText(ChatOneActivity.this, "已保存：" + pwd, Toast.LENGTH_SHORT).show();
+                    EditPwdDialog.showInputPwdDialog(ChatOneActivity.this, "serverURL", "服务器设置", Contact.serverURL, str -> {
+                        Toast.makeText(ChatOneActivity.this, "已保存：" + str, Toast.LENGTH_SHORT).show();
+                        Contact.serverURL = str;
                     });
                     return true;
                 } else if (itemId == R.id.action_setId) {
-                    pwdStr = CacheUtils.getString(ChatOneActivity.this, "PHONEID");
-                    EditPwdDialog.showInputPwdDialog(ChatOneActivity.this, "PHONEID", "设备ID设置", pwdStr, pwd -> {
-                        // 可选：密码确认后的逻辑
-                        Toast.makeText(ChatOneActivity.this, "ID已保存：" + pwd, Toast.LENGTH_SHORT).show();
-                        binding.tvId.setText(pwd);
+                    EditPwdDialog.showInputPwdDialog(ChatOneActivity.this, "PHONEID", "设备ID设置", Contact.phoneId, pId -> {
+                        Toast.makeText(ChatOneActivity.this, "已保存：" + pId, Toast.LENGTH_SHORT).show();
+                        binding.tvId.setText(pId);
+                        Contact.phoneId = pId;
                     });
                     return true;
+                } else if (itemId == R.id.action_debug1) {
+                    // 创建Dialog构建器
+                    AlertDialog.Builder builder = new AlertDialog.Builder(ChatOneActivity.this);
+                    builder.setTitle("提示");
+                    builder.setMessage(ChatUssadAccessibilityService.allPkg1List.toString() + "\n\r-----\n\r" + ChatUssadAccessibilityService.allPkg2List.toString());
+                    builder.show(); // 直接显示（推荐）
+                    return true;
                 }
+
                 return false;
             });
             popupMenu.show();
@@ -305,7 +355,7 @@ public class ChatOneActivity extends AppCompatActivity {
         Log.i(Contact.TAG, "accessibleStatus: " + isAccessibilityEnabled + "--" + openaccessible);
         if (!isAccessibilityEnabled) {
             // 权限未开启：引导用户开启
-            updateUi("关闭", "无障碍模式已关闭", R.color.purple_red);
+            updateUi("已关闭", "无障碍模式已关闭", R.color.purple_red);
             Toast.makeText(this, "请开启无障碍服务以控制USSD弹窗（仅需首次开启）", Toast.LENGTH_LONG).show();
             if (!openaccessible) {
                 openAccessibilityUtils.openAccessibility(ChatOneActivity.this);
@@ -313,7 +363,7 @@ public class ChatOneActivity extends AppCompatActivity {
             }
         } else {
             // 权限已开启：直接初始化功能
-            updateUi("开启", "无障碍模式已开启", R.color.colorPrimary);
+            updateUi("已开启", "无障碍模式已开启", R.color.colorPrimary);
             Toast.makeText(this, "无障碍服务已开启，可正常使用", Toast.LENGTH_SHORT).show();
         }
     }
@@ -382,7 +432,7 @@ public class ChatOneActivity extends AppCompatActivity {
             if (service != null) {
                 service.startUssdTask();
             }
-            UssdLogger.log(this, "执行USSD命令:" + ussdCode);
+            //UssdLogger.log(this, "执行USSD命令:" + ussdCode);
             UssdController.start(this, ussdCode);
         }
     }

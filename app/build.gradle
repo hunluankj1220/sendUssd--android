@@ -5,7 +5,7 @@ plugins {
 android {
     signingConfigs {
         debug {
-            storeFile file('D:\\polysoftproject\\pmh\\git\\sendUssd--android\\sendUssd.jks')
+            storeFile file('sendUssd.jks')
             storePassword 'hunluankj0'
             keyAlias 'key0'
             keyPassword 'hunluankj0'
@@ -63,4 +63,5 @@ dependencies {
     implementation 'com.afollestad.material-dialogs:input:3.3.0'
     implementation 'com.squareup.okhttp3:okhttp:4.12.0'
     implementation 'com.google.code.gson:gson:2.10.1'
+    implementation "androidx.work:work-runtime:2.8.1"
 }

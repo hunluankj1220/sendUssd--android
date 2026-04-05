@@ -1,6 +1,7 @@
 package com.project.setussd.network;
 
 
+import com.project.setussd.Contact;
 import com.project.setussd.activity.chato.ChatOneActivity;
 
 import java.util.Map;
@@ -19,7 +20,7 @@ public class ApiClient {
             ApiCallback<T> callback
     ) {
         OkHttpManager.getInstance().post(
-                ChatOneActivity.serverURL + path,
+                Contact.serverURL + path,
                 params,
                 clazz,
                 callback
@@ -34,7 +35,7 @@ public class ApiClient {
             ApiCallback<T> callback
     ) {
         OkHttpManager.getInstance().get(
-                ChatOneActivity.serverURL + path,
+                Contact.serverURL + path,
                 params,
                 clazz,
                 callback

@@ -29,8 +29,9 @@ public class OkHttpManager {
 
         client = new OkHttpClient.Builder()
                 .connectTimeout(10, TimeUnit.SECONDS)
-                .readTimeout(10, TimeUnit.SECONDS)
-                .writeTimeout(10,TimeUnit.SECONDS)
+                .readTimeout(20, TimeUnit.SECONDS)
+                .writeTimeout(20, TimeUnit.SECONDS)
+                .callTimeout(20, TimeUnit.SECONDS)
                 .addInterceptor(new LogInterceptor(true))
                 .build();
     }
@@ -123,16 +124,8 @@ public class OkHttpManager {
 
     // ================= 统一处理错误码 =================
     private <T> void handleResponse(ApiResponse<T> resp, ApiCallback<T> callback) {
-
-        if (resp.code == ErrorCode.SUCCESS) {
+        if (resp.code == ErrorCode.OK) {
             callback.onSuccess(resp.data);
-
-        } else if (resp.code == ErrorCode.TOKEN_EXPIRED) {
-            // 👉 统一处理登录失效
-            callback.onError(resp.code, "登录过期");
-
-            // TODO: 可以在这里跳登录页
-
         } else {
             callback.onError(resp.code, resp.msg);
         }
